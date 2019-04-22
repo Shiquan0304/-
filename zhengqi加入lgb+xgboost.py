@@ -4,11 +4,6 @@ import lightgbm as lgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import PolynomialFeatures
-#todo xgboost有两种不同的操作形式 1、原生形式 2、sklearn形式
-# 可以混合使用：微调的时候用原生的，预处理使用sklearn
-# 原生的可以查看每轮迭代输出"eval_metric":"rmse"参数定义的均方根误差值，从而判断模型有没有过拟合
-# 在sklearn中可以查看xgboost模型特征的重要度，从而可以进行特征筛选，清除特征噪声
-
 
 #todo 数据读取函数
 outline_path = "../../IndustrialSteam/data/zhengqi_train.txt"
@@ -19,8 +14,7 @@ def load_pandas(path):
     x = df.drop(['target'],1)
     y = df['target']
     return x,y
-#todo 如果数据是libsvm格式的话可以使用xgboost直接读取
-# TODO 额外一点，xgboost原生的优点 可以处理libsvm格式
+
 #读取完成之后直接可以做训练
 def load_libsvm(path):
     dtrain = xgb.DMatrix(path)
@@ -35,9 +29,6 @@ def clean(x,y):
     return 0
 #todo 特征工程
 def preprocession(x,y):
-    #继续实验 把特征重要性比较低的特征删掉之后，poly会不会在同一套参数下超越不加poly
-    # random_state：控制随机状态，选取特征的时候最好不使用，否则减小泛化能力，
-    # 一般数据集划分使用的话，训练的评分相对都较高,但是线上预测效果都不是很好
     x_train,x_test,y_train,y_test = train_test_split(x,y,train_size=0.8,random_state=1)
     # 删除不重要的特征，对预测结果会产生噪声，不能删除太多的数据
     x_train = x_train.drop(['V13','V35'],axis=1)
@@ -66,9 +57,6 @@ def lgb_tarin(x_train,x_test,y_train,y_test):
     return model
 
 #todo 1、sklearn
-# reg_alpha：L1正则限制控制叶子的数量T；reg_lambda：L2正则限制控制每个叶子的权重w
-# objective="reg:linear"：定义最小化损失函数类型，选择线性模型
-# silent=True：默认为True，如果设置为False，运行的时候打印出每一轮的输出结果，包括树深好人叶子结点
 def xgboost_train(x_train,x_test,y_train,y_test):
     model = xgb.XGBRegressor(max_depth=3,
                      learning_rate=0.05,
@@ -154,7 +142,7 @@ def main_sklearn():
     # combine_model(x_train,x_test,y_train,y_test, 1)
     # 导出预测数据
     # model=xgboost_train(x_train, x_test, y_train, y_test)
-    # model = combine_model(x_train,x_test,y_train,y_test, 1) #组合模型返回的模型预测测试集还有问题
+    # model = combine_model(x_train,x_test,y_train,y_test, 1) #组合模型返回的模型预测测试集还有问题，后边有时间修改
     model = lgb_tarin(x_train,x_test,y_train,y_test)
     oneline_predict(model=model, online_path=online_path, online_outpath=online_outpath)
 
